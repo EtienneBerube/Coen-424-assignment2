@@ -1,0 +1,24 @@
+{
+  "name": "coen-424-assignment2",
+  "version": "1.0.0",
+  "description": "Assignment 2",
+  "main": "init.js",
+  "dependencies": {
+    "line-reader": "^0.4.0",
+    "mongodb": "^3.3.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EtienneBerube/Coen-424-assignment2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EtienneBerube/Coen-424-assignment2/issues"
+  },
+  "homepage": "https://github.com/EtienneBerube/Coen-424-assignment2#readme"
+}
