@@ -1,4 +1,5 @@
 var readline = require('readline-sync');
+var MongoClient = require('mongodb').MongoClient;
 
 
 var mapperCPU = function (){
@@ -21,19 +22,65 @@ var mapperFinal = function(){
     emit('Final_Target', this.Final_Target);
 }
 
+var reducerMin = function (key, values) {
+    values = Array.sort(values);
+    return values[0];
+}
+
+var reducerMax = function (key, values) {
+    values = Array.sort(values);
+    return values.pop();
+}
+
+var reducerMedian = function (key, values) {
+    values = Array.sort(values);
+    const index = (values.length - 1) / 2;
+    return values[index | 0];
+
+}
+
+var reducerStdDev = function (key, values) {
+    const reducer = (accumulator, value) => accumulator + value;
+    const sum = values.reduce(reducer, 0);
+
+    const average = sum / values.length;
+
+    const reducerVariance = ((accumulator, value) => accumulator + Math.pow((value - average), 2));
+
+    let variance = values.reduce(reducerVariance, 0);
+
+    return Math.sqrt(variance / values.length);
+}
+
+var reducerNorm = function (key, values) {
+    values = Array.sort(values);
+    const min = values[0];
+    const max = values.pop();
+
+    const normalize = values.map((value) => (value - min) / (max - min));
+
+    return normalize;
+}
+
+var reducer90 = function (key, values) {
+    values = Array.sort(values);
+
+    return values[parseInt(0.9 * (values.length))];
+}
+
 
 run().then((data) => {
     console.log(data);
 })
 
 async function run(){
-    const field = getField();
-    const action = getAction();
+    let field = getField();
+    let action = getAction();
 
-    const map = getMapper(field);
-    const reduce = getReducer(action);
+    let map = getMapper(field);
+    let reduce = getReducer(action);
 
-    const collectionName = getCollection();
+    let collectionName = getCollection();
 
     console.log('Connecting...');
     client = await MongoClient.connect("mongodb://localhost:27017/ass2",{useUnifiedTopology: true});
@@ -47,53 +94,66 @@ async function run(){
         console.log(stats)
 
         client.close();
+
+        console.log('Done')
+        process.exit(0); 
       });
 }
 
 function getField() {
-    const field = readline.question("Which field to analyze: "
+    let field = readline.question("Which field to analyze: "
     +"\n1)CPU Utilization Average" 
     +"\n2)Network In Average" 
     +"\n3)Network Out Average"
     +"\n4)Memory Utilization Average"
-    +"\n5)Final_Target");
+    +"\n5)Final_Target"
+    +"\nEnter: ");
 
     if(parseInt(field) < 1 || parseInt(field) > 5){
         console.log('Wrong selection')
         process.exit(1);  
     }
 
+    field = parseInt(field);
+
     return field
 
 }
 
 function getAction() {
-    const action = readline.question("Which action to perform: "
+    let action = readline.question("Which action to perform: "
     +"\n1)Min" 
     +"\n2)Max" 
-    +"\n3)Average"
+    +"\n3)Median"
     +"\n4)Standard Deviation"
     +"\n5)Normalization"
-    +"\n6)90-th percentile");
+    + "\n6)90-th percentile"
+    + "\nEnter: ");
 
     if(parseInt(action) < 1 || parseInt(action) > 6){
         console.log('Wrong selection')
         process.exit(1);  
     }
+
+    action = parseInt(action);
+
     return action
 }
 
 function getCollection() {
-    const collection = readline.question("Which collection to use: "
+    let collection = readline.question("Which collection to use: "
     +"\n1)DVD-testing" 
     +"\n2)DVD-training" 
     +"\n3)NDBench-testing"
-    +"\n4)NDBench-training");
+        + "\n4)NDBench-training"
+        + "\nEnter: ");
 
     if(parseInt(collection) < 1 || parseInt(collection) > 6){
         console.log('Wrong selection')
         process.exit(1);  
     }
+
+    collection = parseInt(collection);
 
     if(collection == 1){
         return 'DVD-testing';
@@ -127,5 +187,18 @@ function getMapper(field){
 
 function getReducer(action){
 
+    if (action == 1) {
+        return reducerMin;
+    } else if (action == 2) {
+        return reducerMax;
+    } else if (action == 3) {
+        return reducerMedian;
+    } else if (action == 4) {
+        return reducerStdDev;
+    } else if (action == 5) {
+        return reducerNorm;
+    } else if (action == 6) {
+        return reducer90;
+    }
 }
 
