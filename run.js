@@ -38,6 +38,17 @@ var reducerMedian = function (key, values) {
 };
 
 var reducerStdDev = function (key, values) {
+    let max = values[values.length - 1];
+    let returning_object;
+    let isFirst = true;
+
+    if(typeof max === 'object'){
+        print(max.toSource());
+        returning_object = max;
+        values.pop();
+        isFirst = false;
+    }
+
     const reducer = (accumulator, value) => accumulator + value;
     const sum = values.reduce(reducer, 0);
 
@@ -47,6 +58,12 @@ var reducerStdDev = function (key, values) {
         accumulator + Math.pow(value - average, 2);
 
     let variance = values.reduce(reducerVariance, 0);
+
+    if(isFirst){
+        return {variances: [variance]};
+    }else{
+        return returning_object.variances.append(variance);
+    }
 
     return Math.sqrt(variance / values.length);
 };
@@ -119,7 +136,6 @@ async function run() {
             client.close();
 
             console.log("Done");
-            process.exit(0);
         }
     );
 }
