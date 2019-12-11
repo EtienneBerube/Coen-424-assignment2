@@ -1,5 +1,27 @@
 var readline = require('readline-sync');
 
+
+var mapperCPU = function (){
+    emit('CPUUtilization_Average', this.CPUUtilization_Average);
+}
+
+var mapperNetworkIn = function(){
+    emit('NetworkIn_Average', this.NetworkIn_Average);
+}
+
+var mapperNetworkOut = function(){
+    emit('NetworkOut_Average', this.NetworkOut_Average);
+}
+
+var mapperMemory = function(){
+    emit('MemoryUtilization_Average', this.MemoryUtilization_Average);
+}
+
+var mapperFinal = function(){
+    emit('Final_Target', this.Final_Target);
+}
+
+
 run().then((data) => {
     console.log(data);
 })
@@ -91,25 +113,15 @@ function getCollection() {
 
 function getMapper(field){
     if(field == 1){
-        return function(){
-            emit('CPUUtilization_Average', this.CPUUtilization_Average);
-        }
+        return mapperCPU;
     }else if(field == 2){
-        return function(){
-            emit('NetworkIn_Average', this.NetworkIn_Average);
-        }
+        return mapperNetworkIn;
     }else if(field == 3){
-        return function(){
-            emit('NetworkOut_Average', this.NetworkOut_Average);
-        }
+        return mapperNetworkOut;
     }else if(field == 4){
-        return function(){
-            emit('MemoryUtilization_Average', this.MemoryUtilization_Average);
-        }
+        return mapperMemory;
     }else if(field == 5){
-        return function(){
-            emit('Final_Target', this.Final_Target);
-        }
+        return mapperFinal;
     }
 }
 
@@ -117,22 +129,3 @@ function getReducer(action){
 
 }
 
-// function mapperCPU(){
-//     emit('CPUUtilization_Average', this.CPUUtilization_Average);
-// }
-
-// function mapperNetworkIn(){
-//     emit('NetworkIn_Average', this.NetworkIn_Average);
-// }
-
-// function mapperNetworkOut(){
-//     emit('NetworkOut_Average', this.NetworkOut_Average);
-// }
-
-// function mapperMemory(){
-//     emit('MemoryUtilization_Average', this.MemoryUtilization_Average);
-// }
-
-// function mapperFinal(){
-//     emit('Final_Target', this.Final_Target);
-// }
