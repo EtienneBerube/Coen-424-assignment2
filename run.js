@@ -31,23 +31,37 @@ var reducerMax = function (key, values) {
     return values.pop();
 };
 
-var reducerMedian = function (key, values) {
+var reducerAggregator = function(key, values){
     values = Array.sort(values);
-    const index = (values.length - 1) / 2;
-    return values[index | 0];
-};
-
-var reducerStdDev = function (key, values) {
-    let max = values[values.length - 1];
-    let returning_object;
+    let last = values[values.length - 1];
     let isFirst = true;
 
-    if(typeof max === 'object'){
-        print(max.toSource());
-        returning_object = max;
+    if(typeof last === 'object'){
+        print(last.toSource());
+        returning_object = last;
         values.pop();
         isFirst = false;
     }
+
+    if(isFirst){
+        let obj = {"values": values};
+        return obj;
+    }else{
+        returning_object['values'].push(...values);
+        return returning_object;
+    }
+
+}
+
+var finalizerMedian = function(key, reducedValue){
+    let values = Array.sort(reducedValue.values);
+
+    const index = (values.length - 1) / 2;
+    return values[index | 0];
+}
+
+var finalizerStdDev = function(key, reducedValue){
+    let values = Array.sort(reducedValue.values);
 
     const reducer = (accumulator, value) => accumulator + value;
     const sum = values.reduce(reducer, 0);
@@ -59,45 +73,29 @@ var reducerStdDev = function (key, values) {
 
     let variance = values.reduce(reducerVariance, 0);
 
-    if(isFirst){
-        return {variances: [variance]};
-    }else{
-        return returning_object.variances.append(variance);
-    }
-
     return Math.sqrt(variance / values.length);
 };
 
-var reducerNorm = function (key, values) {
-    values = Array.sort(values);
+
+var finalizerNorm = function(key, reducedValue){
+    let values = Array.sort(reducedValue.values);
     const min = values[0];
     let max = values[values.length - 1];
-    let prev_val;
 
-    if(typeof max === 'object'){
-        print(max.toSource());
-        prev_val = max.normalized_value;
-        max = values[values.length - 2];
-        values.pop();
-    }
-
-    print('before:' + values.join(','));
-    print('min:' + min);
-    print('max:' + max);
+    print('In Finalizer');
 
     const normalize = values.map((value) => 
     {
         let norm_val =  (parseFloat(value) - parseFloat(min)) / (parseFloat(max) - parseFloat(min));
-        print('in Loop: ' + norm_val);
         return norm_val;
     });
 
-    print('after loop: '+ values.join(','));
-    return {"normalized_values" : normalize.concat(prev_val)};
+    return {"normalized_values" : normalize};
 };
 
-var reducer90 = function (key, values) {
-    values = Array.sort(values);
+
+var finalizer90 = function(key, reducedValue){
+    let values = Array.sort(reducedValue.values);
 
     return values[parseInt(0.9 * values.length)];
 };
@@ -120,10 +118,22 @@ async function run() {
     console.log("Connected");
     let collection = client.db("ass2").collection(collectionName);
 
+    let configObject = { out: { inline: 1 }, verbose: true }
+
+    if(action == 3){
+        configObject.finalize = finalizerMedian;
+    }else if(action == 4){
+        configObject.finalize = finalizerStdDev;
+    }else if(action == 5){
+        configObject.finalize = finalizerNorm;
+    }else if(action == 6){
+        configObject.finalize = finalizer90;
+    }
+
     collection.mapReduce(
         map,
         reduce,
-        { out: { inline: 1 }, verbose: true },
+        configObject,
         function (err, result, stats) {
             if(err){
                 console.log("Error: ");
@@ -236,12 +246,12 @@ function getReducer(action) {
     } else if (action == 2) {
         return reducerMax;
     } else if (action == 3) {
-        return reducerMedian;
+        return reducerAggregator;
     } else if (action == 4) {
-        return reducerStdDev;
+        return reducerAggregator;
     } else if (action == 5) {
-        return reducerNorm;
+        return reducerAggregator;
     } else if (action == 6) {
-        return reducer90;
+        return reducerAggregator;
     }
 }
