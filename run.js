@@ -146,6 +146,7 @@ async function run() {
             client.close();
 
             console.log("Done");
+            process.exit(0);
         }
     );
 }
